@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: TaskFlow.API/Dockerfile
+    ports:
+      - "5055:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=taskflow;Username=postgres;Password=admin
+      - Jwt__Secret=ЦеДужеДовгийСекретнийКлючЯкийПовиненБутиМінімум32Символи!
+      - Jwt__Issuer=TaskFlow.API
+      - Jwt__Audience=TaskFlow.Client
+      - Jwt__ExpiryMinutes=60
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: taskflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
